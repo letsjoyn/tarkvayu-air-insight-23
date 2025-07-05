@@ -1,74 +1,83 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "next-themes";
-import Index from "./pages/Index";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import ChatBotUI from "./components/ChatBotUI";
+import LoginPopup from "./components/LoginPopup";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Trends from "./pages/Trends";
 import Forecast from "./pages/Forecast";
 import Health from "./pages/Health";
 import Settings from "./pages/Settings";
-import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import LoginPopup from "./components/LoginPopup";
 
-function App() {
+const queryClient = new QueryClient();
+
+const App = () => {
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [hasSeenPopup, setHasSeenPopup] = useState(false);
 
   useEffect(() => {
-    // Check if user has seen the login popup before
-    const hasSeenLogin = localStorage.getItem('hasSeenLogin');
-    if (!hasSeenLogin) {
-      // Show popup after a short delay
+    // Show login popup on first visit
+    const hasVisited = localStorage.getItem('hasVisitedTarkVayu');
+    if (!hasVisited && !hasSeenPopup) {
       setTimeout(() => {
         setShowLoginPopup(true);
-      }, 2000);
+        setHasSeenPopup(true);
+      }, 2000); // Show after 2 seconds
     }
-  }, []);
+  }, [hasSeenPopup]);
 
-  const handleCloseLogin = () => {
+  const handleClosePopup = () => {
     setShowLoginPopup(false);
-    localStorage.setItem('hasSeenLogin', 'true');
+    localStorage.setItem('hasVisitedTarkVayu', 'true');
   };
 
-  const handleSkipLogin = () => {
+  const handleSkipPopup = () => {
     setShowLoginPopup(false);
-    localStorage.setItem('hasSeenLogin', 'true');
+    localStorage.setItem('hasVisitedTarkVayu', 'true');
   };
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <Router>
-        <div className="min-h-screen bg-background flex flex-col">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/trends" element={<Trends />} />
-              <Route path="/forecast" element={<Forecast />} />
-              <Route path="/health" element={<Health />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <TooltipProvider>
           <Toaster />
-          
-          {/* Login Popup */}
-          <LoginPopup 
-            isOpen={showLoginPopup} 
-            onClose={handleCloseLogin}
-            onSkip={handleSkipLogin}
-          />
-        </div>
-      </Router>
-    </ThemeProvider>
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+              <Navbar />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/trends" element={<Trends />} />
+                <Route path="/forecast" element={<Forecast />} />
+                <Route path="/health" element={<Health />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Footer />
+              <ChatBotUI />
+              <LoginPopup 
+                isOpen={showLoginPopup}
+                onClose={handleClosePopup}
+                onSkip={handleSkipPopup}
+              />
+            </div>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
+    </QueryClientProvider>
   );
-}
+};
 
 export default App;
