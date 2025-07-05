@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, X, Bot, User, MapPin, TrendingUp } from "lucide-react";
 import VoiceAssistant from "./VoiceAssistant";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Message {
   id: string;
@@ -18,24 +16,18 @@ interface Message {
 
 const ChatBotUI = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [openaiApiKey, setOpenaiApiKey] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { t, language } = useLanguage();
-
-  // Initialize welcome message based on language
-  useEffect(() => {
-    const welcomeMessage: Message = {
+  const [messages, setMessages] = useState<Message[]>([
+    {
       id: "welcome",
-      text: t('chatbot.welcome'),
+      text: "Hello! I'm Vayu, your AI air quality assistant. I can help you with:\n\n• Current AQI information for 200+ Indian cities\n• Health recommendations based on air quality\n• Detailed pollution explanations\n• Location-specific advice\n• Weather forecasts\n• Voice assistance for hands-free interaction\n\nHow can I help you today?",
       sender: "bot",
       timestamp: new Date(),
       type: "text"
-    };
-    setMessages([welcomeMessage]);
-  }, [language, t]);
+    }
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -45,64 +37,43 @@ const ChatBotUI = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Enhanced AI response using OpenAI API
-  const generateAIResponse = async (userMessage: string): Promise<string> => {
-    if (!openaiApiKey) {
-      return t('chatbot.need_api_key');
-    }
-
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiApiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4.1',
-          messages: [
-            {
-              role: 'system',
-              content: `You are Vayu, an AI assistant specialized in air quality information for India. You provide accurate, helpful information about AQI, pollution, health recommendations, and environmental data. Respond in ${language === 'hindi' ? 'Hindi' : 'English'}. Keep responses concise but informative.`
-            },
-            {
-              role: 'user',
-              content: userMessage
-            }
-          ],
-          max_tokens: 500,
-          temperature: 0.7
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
-
-      const data = await response.json();
-      return data.choices[0].message.content;
-    } catch (error) {
-      console.error('OpenAI API error:', error);
-      return t('chatbot.ai_error');
-    }
-  };
-
-  // Fallback responses for when OpenAI isn't available
-  const generateFallbackResponse = (userMessage: string): string => {
+  // Enhanced responses with comprehensive knowledge
+  const generateBotResponse = (userMessage: string): Message => {
     const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('aqi') || lowerMessage.includes('air quality')) {
-      return t('chatbot.aqi_info');
-    } else if (lowerMessage.includes('health') || lowerMessage.includes('recommend')) {
-      return t('chatbot.health_tips');
-    } else if (lowerMessage.includes('pollution') || lowerMessage.includes('cause')) {
-      return t('chatbot.pollution_sources');
+    let response = "";
+    let type: "text" | "aqi" | "suggestion" = "text";
+
+    if (lowerMessage.includes("aqi") || lowerMessage.includes("air quality")) {
+      response = "I can provide AQI data for 200+ Indian cities! Current examples:\n\n🔴 Delhi: 324 (Hazardous)\n🟠 Mumbai: 156 (Unhealthy)\n🟡 Bangalore: 65 (Moderate)\n🟢 Kerala cities: 48-54 (Good)\n\nWhich specific city would you like to know about? I have real-time data for metros, tier-1, tier-2, and tier-3 cities across all Indian states.";
+      type = "aqi";
+    } else if (lowerMessage.includes("health") || lowerMessage.includes("recommend")) {
+      response = "Based on current air quality levels, here are personalized health recommendations:\n\n🏃‍♂️ **Exercise Guidelines:**\n• AQI 0-50: Perfect for outdoor activities\n• AQI 51-100: Light outdoor exercise OK\n• AQI 101-150: Limit prolonged outdoor activities\n• AQI 151+: Exercise indoors only\n\n😷 **Protection Measures:**\n• N95 masks for AQI > 100\n• Air purifiers at home\n• Avoid morning/evening peak hours\n• Stay hydrated\n\nDo you have any specific health conditions I should consider?";
+    } else if (lowerMessage.includes("voice") || lowerMessage.includes("speak")) {
+      response = "🎤 Voice Assistant Features:\n\n• Say 'Current AQI' to get live data\n• Ask about specific cities by voice\n• Get spoken health recommendations\n• Voice-activated weather updates\n• Hands-free air quality monitoring\n\nClick the microphone button to start voice interaction! I support both English and Hindi voice commands.";
+    } else if (lowerMessage.includes("city") || lowerMessage.includes("cities")) {
+      response = "🏙️ I monitor 200+ Indian cities across all states:\n\n**Metro Cities:** Delhi, Mumbai, Kolkata, Chennai, Bangalore, Hyderabad\n**Major Cities:** Pune, Ahmedabad, Jaipur, Lucknow, Kanpur, Nagpur\n**Tier-2 Cities:** Indore, Bhopal, Coimbatore, Kochi, Guwahati\n**Small Towns:** Including industrial towns, hill stations, and coastal areas\n\nJust name any Indian city, and I'll give you its current AQI, health advice, and forecast!";
+    } else if (lowerMessage.includes("weather") || lowerMessage.includes("forecast")) {
+      response = "🌤️ **72-Hour Air Quality Forecast:**\n\nToday: Variable conditions across regions\n• North India: High pollution (AQI 150-300)\n• South India: Moderate levels (AQI 60-120)\n• Coastal areas: Generally good (AQI 40-80)\n• Hill stations: Excellent (AQI 20-50)\n\n**Weather Impact:**\n• Wind patterns affecting dispersion\n• Temperature inversions trapping pollutants\n• Monsoon effects on air quality\n\nWould you like a specific city's 3-day forecast?";
+    } else if (lowerMessage.includes("pollution") || lowerMessage.includes("cause")) {
+      response = "🏭 **Major Pollution Sources in India:**\n\n**Vehicular Emissions (30-40%)**\n• Cars, buses, trucks, two-wheelers\n• Diesel generators\n\n**Industrial Sources (25-35%)**\n• Power plants, factories\n• Construction activities\n\n**Agricultural Burning (15-25%)**\n• Crop residue burning in Punjab, Haryana\n• Seasonal spikes in North India\n\n**Other Sources:**\n• Dust storms • Waste burning • Cooking fuels\n\nEach city has different primary sources. Which city's pollution profile interests you?";
+    } else if (lowerMessage.includes("mask") || lowerMessage.includes("protection")) {
+      response = "😷 **Complete Protection Guide:**\n\n**Mask Recommendations:**\n• N95/N99: For AQI > 100 (95-99% filtration)\n• Surgical masks: Basic protection only\n• Cloth masks: Not effective for PM2.5\n\n**Indoor Protection:**\n• HEPA air purifiers\n• Keep windows closed during high pollution\n• Use exhaust fans while cooking\n\n**Timing Matters:**\n• Avoid 6-10 AM and 6-10 PM (peak hours)\n• Best air quality: 2-4 PM usually\n\n**Special Groups:**\n• Children, elderly, pregnant women need extra care\n• Asthma/COPD patients should stay indoors when AQI > 150";
+    } else if (lowerMessage.includes("hindi") || lowerMessage.includes("हिंदी")) {
+      response = "🇮🇳 मैं हिंदी में भी जवाब दे सकता हूं!\n\n**मुख्य सेवाएं:**\n• वायु गुणवत्ता की जानकारी\n• स्वास्थ्य सुझाव\n• 200+ भारतीय शहरों का डेटा\n• आवाज से सहायता\n\nआप हिंदी या अंग्रेजी में कोई भी सवाल पूछ सकते हैं। Settings में भाषा बदल सकते हैं।\n\nक्या आपको किसी खास शहर की AQI जानकारी चाहिए?";
     } else {
-      return t('chatbot.general_help');
+      response = "🤖 **Vayu AI Assistant Capabilities:**\n\n• 🌍 Real-time AQI for 200+ Indian cities\n• 🏥 Personalized health recommendations\n• 🎤 Voice interaction (speak & listen)\n• 📊 3-day air quality forecasts\n• 🗺️ Interactive pollution maps\n• 🌡️ Weather impact analysis\n• 🇮🇳 Hindi & English support\n• 📱 Smart notifications\n\n**Popular Commands:**\n'Current AQI Delhi' | 'Health tips' | 'Best time to exercise' | 'Mask recommendations'\n\nWhat would you like to explore?";
     }
+
+    return {
+      id: Date.now().toString(),
+      text: response,
+      sender: "bot",
+      timestamp: new Date(),
+      type
+    };
   };
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (inputMessage.trim() === "") return;
 
     const userMessage: Message = {
@@ -116,38 +87,12 @@ const ChatBotUI = () => {
     setInputMessage("");
     setIsTyping(true);
 
-    try {
-      let botResponseText: string;
-      
-      if (openaiApiKey) {
-        botResponseText = await generateAIResponse(inputMessage);
-      } else {
-        // Use fallback responses
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate typing delay
-        botResponseText = generateFallbackResponse(inputMessage);
-      }
-
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: botResponseText,
-        sender: "bot",
-        timestamp: new Date(),
-        type: "text"
-      };
-
+    // Simulate typing delay
+    setTimeout(() => {
+      const botResponse = generateBotResponse(inputMessage);
       setMessages(prev => [...prev, botResponse]);
-    } catch (error) {
-      const errorResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: t('chatbot.error_occurred'),
-        sender: "bot",
-        timestamp: new Date(),
-        type: "text"
-      };
-      setMessages(prev => [...prev, errorResponse]);
-    } finally {
       setIsTyping(false);
-    }
+    }, 1500);
   };
 
   const handleVoiceInput = (text: string) => {
@@ -167,18 +112,19 @@ const ChatBotUI = () => {
   };
 
   const quickActions = [
-    { text: t('chatbot.quick_aqi'), icon: <TrendingUp className="h-4 w-4" /> },
-    { text: t('chatbot.quick_health'), icon: <User className="h-4 w-4" /> },
-    { text: t('chatbot.quick_voice'), icon: <MessageCircle className="h-4 w-4" /> },
-    { text: t('chatbot.quick_cities'), icon: <MapPin className="h-4 w-4" /> },
+    { text: "Current AQI Delhi", icon: <TrendingUp className="h-4 w-4" /> },
+    { text: "Health recommendations", icon: <User className="h-4 w-4" /> },
+    { text: "Voice assistance", icon: <MessageCircle className="h-4 w-4" /> },
+    { text: "City pollution data", icon: <MapPin className="h-4 w-4" /> },
   ];
 
   return (
     <>
-      {/* Enhanced Chat Bubble Button */}
+      {/* Enhanced Chat Bubble Button - More Visible */}
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
           <div className="relative">
+            {/* Pulsing animation ring */}
             <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-green-500 rounded-full animate-pulse opacity-75"></div>
             
             <Button
@@ -192,17 +138,17 @@ const ChatBotUI = () => {
                 </div>
               </div>
               <div className="text-left">
-                <div className="text-base font-bold">{t('chatbot.title')}</div>
-                <div className="text-xs text-blue-100">{t('chatbot.subtitle')}</div>
+                <div className="text-base font-bold">Vayu: AI Assistant</div>
+                <div className="text-xs text-blue-100">Air Quality Expert • Voice Enabled</div>
               </div>
             </Button>
           </div>
         </div>
       )}
 
-      {/* Chat Window */}
+      {/* Enhanced Chat Window */}
       {isOpen && (
-        <Card className="fixed top-16 right-6 bottom-6 w-96 shadow-2xl z-50 flex flex-col bg-white dark:bg-gray-800 border-2">
+        <Card className="fixed top-16 right-6 bottom-6 w-96 shadow-2xl z-50 flex flex-col bg-white dark:bg-gray-800 border-2 border-gradient-to-r from-blue-500 to-green-500">
           {/* Header */}
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-t-lg">
             <div className="flex items-center space-x-3">
@@ -210,8 +156,8 @@ const ChatBotUI = () => {
                 <Bot className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-base">{t('chatbot.title')}</h3>
-                <p className="text-xs text-blue-100">{t('chatbot.features')}</p>
+                <h3 className="font-bold text-base">Vayu AI Assistant</h3>
+                <p className="text-xs text-blue-100">200+ Cities • Voice Enabled • Real-time Data</p>
               </div>
             </div>
             <Button
@@ -223,24 +169,6 @@ const ChatBotUI = () => {
               <X className="h-4 w-4" />
             </Button>
           </div>
-
-          {/* OpenAI API Key Input */}
-          {!openaiApiKey && (
-            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border-b">
-              <div className="text-xs mb-2 text-yellow-700 dark:text-yellow-300">
-                {t('chatbot.api_key_prompt')}
-              </div>
-              <div className="flex space-x-2">
-                <Input
-                  type="password"
-                  placeholder={t('chatbot.enter_api_key')}
-                  value={openaiApiKey}
-                  onChange={(e) => setOpenaiApiKey(e.target.value)}
-                  className="text-xs"
-                />
-              </div>
-            </div>
-          )}
 
           {/* Voice Assistant Controls */}
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
@@ -333,7 +261,7 @@ const ChatBotUI = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={t('chatbot.input_placeholder')}
+                placeholder="Ask about air quality, health tips, or say 'voice help'..."
                 className="flex-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 disabled={isTyping}
               />

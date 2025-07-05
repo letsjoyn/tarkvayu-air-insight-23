@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import AQIStats from "../components/AQIStats";
@@ -7,17 +7,12 @@ import IndiaAQIMap from "../components/IndiaAQIMap";
 import CitySelector from "../components/CitySelector";
 import LocationDetector from "../components/LocationDetector";
 import { MapPin, Wind, Droplets, Factory } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 interface City {
   name: string;
   state: string;
   population?: string;
   type: "metro" | "tier1" | "tier2" | "tier3";
-}
-
-interface AQIData {
-  [cityName: string]: number;
 }
 
 const Dashboard = () => {
@@ -27,82 +22,56 @@ const Dashboard = () => {
     population: "3.2 Cr",
     type: "metro"
   });
-  const [realTimeAQI, setRealTimeAQI] = useState<AQIData>({});
-  const [loading, setLoading] = useState(true);
-  const { t } = useLanguage();
-
-  // Fetch real-time AQI data from OpenAQ API
-  const fetchRealTimeAQI = async () => {
-    try {
-      const response = await fetch("https://api.openaq.org/v2/latest?country=IN&limit=200&page=1");
-      const data = await response.json();
-      
-      const aqiMap: AQIData = {};
-      data.results?.forEach((location: any) => {
-        const pm25 = location.measurements.find((m: any) => m.parameter === 'pm25');
-        if (pm25 && location.city) {
-          aqiMap[location.city] = Math.round(pm25.value);
-        }
-      });
-      
-      setRealTimeAQI(aqiMap);
-    } catch (error) {
-      console.error("Failed to fetch real-time AQI data:", error);
-      // Fallback to mock data
-      setRealTimeAQI({
-        "Delhi": 156,
-        "Mumbai": 98,
-        "Bangalore": 65,
-        "Chennai": 78,
-        "Kolkata": 134,
-        "Patna": 168,
-        "Varanasi": 142,
-        "Jaunpur": 178,
-        "Jhansi": 89,
-        "Siliguri": 95
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRealTimeAQI();
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchRealTimeAQI, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleLocationDetected = (location: { lat: number; lng: number; city: string }) => {
+    // Update selected city based on detected location
     const detectedCity: City = {
       name: location.city,
-      state: location.city,
-      type: "metro"
+      state: location.city, // Simplified - in real app you'd get proper state info
+      type: "metro" // Simplified classification
     };
     setSelectedCity(detectedCity);
   };
 
-  const currentAQI = realTimeAQI[selectedCity.name] || 95;
+  // Mock AQI data that changes based on selected city
+  const getAQIData = (city: City) => {
+    const baseAQI = {
+      "Delhi": 156,
+      "Mumbai": 98,
+      "Bangalore": 65,
+      "Chennai": 78,
+      "Kolkata": 134,
+      "Patna": 168,
+      "Varanasi": 142,
+      "Jaunpur": 178,
+      "Jhansi": 89,
+      "Siliguri": 95
+    };
+    
+    return baseAQI[city.name as keyof typeof baseAQI] || 95;
+  };
+
+  const currentAQI = getAQIData(selectedCity);
 
   const getAQILevel = (aqi: number) => {
-    if (aqi <= 50) return { level: t('aqi.good'), color: "bg-green-500", textColor: "text-green-700 dark:text-green-400" };
-    if (aqi <= 100) return { level: t('aqi.moderate'), color: "bg-yellow-500", textColor: "text-yellow-700 dark:text-yellow-400" };
-    if (aqi <= 150) return { level: t('aqi.unhealthy_sensitive'), color: "bg-orange-500", textColor: "text-orange-700 dark:text-orange-400" };
-    if (aqi <= 200) return { level: t('aqi.unhealthy'), color: "bg-red-500", textColor: "text-red-700 dark:text-red-400" };
-    if (aqi <= 300) return { level: t('aqi.very_unhealthy'), color: "bg-purple-500", textColor: "text-purple-700 dark:text-purple-400" };
-    return { level: t('aqi.hazardous'), color: "bg-gray-800", textColor: "text-gray-100 dark:text-gray-300" };
+    if (aqi <= 50) return { level: "Good", color: "bg-green-500", textColor: "text-green-700 dark:text-green-400" };
+    if (aqi <= 100) return { level: "Moderate", color: "bg-yellow-500", textColor: "text-yellow-700 dark:text-yellow-400" };
+    if (aqi <= 150) return { level: "Unhealthy for Sensitive", color: "bg-orange-500", textColor: "text-orange-700 dark:text-orange-400" };
+    if (aqi <= 200) return { level: "Unhealthy", color: "bg-red-500", textColor: "text-red-700 dark:text-red-400" };
+    if (aqi <= 300) return { level: "Very Unhealthy", color: "bg-purple-500", textColor: "text-purple-700 dark:text-purple-400" };
+    return { level: "Hazardous", color: "bg-gray-800", textColor: "text-gray-100 dark:text-gray-300" };
   };
 
   const aqiInfo = getAQILevel(currentAQI);
 
   // Mock pollutants data
   const pollutants = [
-    { name: "PM2.5", value: 45, unit: "μg/m³", status: t('aqi.moderate'), color: "yellow" },
-    { name: "PM10", value: 89, unit: "μg/m³", status: t('aqi.unhealthy'), color: "red" },
-    { name: "NO₂", value: 23, unit: "ppb", status: t('aqi.good'), color: "green" },
-    { name: "SO₂", value: 12, unit: "ppb", status: t('aqi.good'), color: "green" },
-    { name: "O₃", value: 67, unit: "ppb", status: t('aqi.moderate'), color: "yellow" },
-    { name: "CO", value: 1.2, unit: "ppm", status: t('aqi.good'), color: "green" }
+    { name: "PM2.5", value: 45, unit: "μg/m³", status: "Moderate", color: "yellow" },
+    { name: "PM10", value: 89, unit: "μg/m³", status: "Unhealthy", color: "red" },
+    { name: "NO₂", value: 23, unit: "ppb", status: "Good", color: "green" },
+    { name: "SO₂", value: 12, unit: "ppb", status: "Good", color: "green" },
+    { name: "O₃", value: 67, unit: "ppb", status: "Moderate", color: "yellow" },
+    { name: "CO", value: 1.2, unit: "ppm", status: "Good", color: "green" }
   ];
 
   return (
@@ -111,7 +80,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            {t('dashboard.title')}
+            Real-Time AQI Dashboard
           </h1>
           <div className="flex items-center space-x-4 max-w-2xl">
             <div className="flex-1">
@@ -136,7 +105,7 @@ const Dashboard = () => {
                   </CardTitle>
                 </div>
                 <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300">
-                  {t('dashboard.live')}
+                  Live
                 </Badge>
               </div>
             </CardHeader>
@@ -144,13 +113,13 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                    {loading ? '...' : currentAQI}
+                    {currentAQI}
                   </div>
                   <div className={`text-lg font-medium ${aqiInfo.textColor}`}>
                     {aqiInfo.level}
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {t('dashboard.last_updated')}: {new Date().toLocaleTimeString()}
+                    Last updated: {new Date().toLocaleTimeString()}
                   </p>
                 </div>
                 <div className={`w-20 h-20 ${aqiInfo.color} rounded-full flex items-center justify-center`}>
@@ -170,7 +139,7 @@ const Dashboard = () => {
                   <Droplets className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.humidity')}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Humidity</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">68%</p>
                 </div>
               </div>
@@ -184,7 +153,7 @@ const Dashboard = () => {
                   <Wind className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.wind_speed')}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Wind Speed</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">12 km/h</p>
                 </div>
               </div>
@@ -198,7 +167,7 @@ const Dashboard = () => {
                   <Factory className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.visibility')}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Visibility</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">2.5 km</p>
                 </div>
               </div>
