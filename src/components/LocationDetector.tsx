@@ -87,11 +87,11 @@ const LocationDetector = ({ onLocationDetected }: LocationDetectorProps) => {
   const getCityFromCoordinates = (lat: number, lng: number) => {
     // This is a simplified mock - in reality you'd use a proper geocoding service
     const cities = [
-      { name: "Delhi", lat: 28.6139, lng: 77.2090, bounds: { latRange: 1, lngRange: 1 } },
-      { name: "Mumbai", lat: 19.0760, lng: 72.8777, bounds: { latRange: 1, lngRange: 1 } },
-      { name: "Bangalore", lat: 12.9716, lng: 77.5946, bounds: { latRange: 1, lngRange: 1 } },
-      { name: "Chennai", lat: 13.0827, lng: 80.2707, bounds: { latRange: 1, lngRange: 1 } },
-      { name: "Kolkata", lat: 22.5726, lng: 88.3639, bounds: { latRange: 1, lngRange: 1 } },
+      { name: "Delhi", city: "Delhi", lat: 28.6139, lng: 77.2090, bounds: { latRange: 1, lngRange: 1 } },
+      { name: "Mumbai", city: "Mumbai", lat: 19.0760, lng: 72.8777, bounds: { latRange: 1, lngRange: 1 } },
+      { name: "Bangalore", city: "Bangalore", lat: 12.9716, lng: 77.5946, bounds: { latRange: 1, lngRange: 1 } },
+      { name: "Chennai", city: "Chennai", lat: 13.0827, lng: 80.2707, bounds: { latRange: 1, lngRange: 1 } },
+      { name: "Kolkata", city: "Kolkata", lat: 22.5726, lng: 88.3639, bounds: { latRange: 1, lngRange: 1 } },
     ];
 
     const nearestCity = cities.find(city => 
@@ -99,7 +99,7 @@ const LocationDetector = ({ onLocationDetected }: LocationDetectorProps) => {
       Math.abs(lng - city.lng) < city.bounds.lngRange
     );
 
-    return nearestCity || { name: "Unknown City", lat, lng };
+    return nearestCity || { name: "Unknown City", city: "Unknown City", lat, lng };
   };
 
   return (
