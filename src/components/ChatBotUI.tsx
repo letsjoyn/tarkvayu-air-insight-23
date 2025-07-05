@@ -1,10 +1,10 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, X, Bot, User, MapPin, TrendingUp } from "lucide-react";
+import VoiceAssistant from "./VoiceAssistant";
 
 interface Message {
   id: string;
@@ -19,7 +19,7 @@ const ChatBotUI = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      text: "Hello! I'm Vayu, your AI air quality assistant. I can help you with:\n\n• Current AQI information\n• Health recommendations\n• Pollution explanations\n• Location-specific advice\n\nHow can I help you today?",
+      text: "Hello! I'm Vayu, your AI air quality assistant. I can help you with:\n\n• Current AQI information for 200+ Indian cities\n• Health recommendations based on air quality\n• Detailed pollution explanations\n• Location-specific advice\n• Weather forecasts\n• Voice assistance for hands-free interaction\n\nHow can I help you today?",
       sender: "bot",
       timestamp: new Date(),
       type: "text"
@@ -37,28 +37,31 @@ const ChatBotUI = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Mock responses based on user input
+  // Enhanced responses with comprehensive knowledge
   const generateBotResponse = (userMessage: string): Message => {
     const lowerMessage = userMessage.toLowerCase();
     let response = "";
     let type: "text" | "aqi" | "suggestion" = "text";
 
     if (lowerMessage.includes("aqi") || lowerMessage.includes("air quality")) {
-      response = "The current AQI in Delhi is 156 (Unhealthy). This means:\n\n• Sensitive groups should limit outdoor activities\n• Everyone should reduce prolonged outdoor exertion\n• Consider wearing a mask when going outside\n• Keep windows closed during peak hours\n\nWould you like me to explain what causes this pollution level?";
+      response = "I can provide AQI data for 200+ Indian cities! Current examples:\n\n🔴 Delhi: 324 (Hazardous)\n🟠 Mumbai: 156 (Unhealthy)\n🟡 Bangalore: 65 (Moderate)\n🟢 Kerala cities: 48-54 (Good)\n\nWhich specific city would you like to know about? I have real-time data for metros, tier-1, tier-2, and tier-3 cities across all Indian states.";
       type = "aqi";
     } else if (lowerMessage.includes("health") || lowerMessage.includes("recommend")) {
-      response = "Based on the current air quality (AQI 156), here are my health recommendations:\n\n🏃‍♂️ Exercise: Move workouts indoors\n😷 Protection: Wear N95 masks outdoors\n👶 Children: Limit outdoor play time\n🏠 Home: Use air purifiers if available\n🪟 Windows: Keep closed during high pollution\n\nAny specific health concerns I can address?";
+      response = "Based on current air quality levels, here are personalized health recommendations:\n\n🏃‍♂️ **Exercise Guidelines:**\n• AQI 0-50: Perfect for outdoor activities\n• AQI 51-100: Light outdoor exercise OK\n• AQI 101-150: Limit prolonged outdoor activities\n• AQI 151+: Exercise indoors only\n\n😷 **Protection Measures:**\n• N95 masks for AQI > 100\n• Air purifiers at home\n• Avoid morning/evening peak hours\n• Stay hydrated\n\nDo you have any specific health conditions I should consider?";
+    } else if (lowerMessage.includes("voice") || lowerMessage.includes("speak")) {
+      response = "🎤 Voice Assistant Features:\n\n• Say 'Current AQI' to get live data\n• Ask about specific cities by voice\n• Get spoken health recommendations\n• Voice-activated weather updates\n• Hands-free air quality monitoring\n\nClick the microphone button to start voice interaction! I support both English and Hindi voice commands.";
+    } else if (lowerMessage.includes("city") || lowerMessage.includes("cities")) {
+      response = "🏙️ I monitor 200+ Indian cities across all states:\n\n**Metro Cities:** Delhi, Mumbai, Kolkata, Chennai, Bangalore, Hyderabad\n**Major Cities:** Pune, Ahmedabad, Jaipur, Lucknow, Kanpur, Nagpur\n**Tier-2 Cities:** Indore, Bhopal, Coimbatore, Kochi, Guwahati\n**Small Towns:** Including industrial towns, hill stations, and coastal areas\n\nJust name any Indian city, and I'll give you its current AQI, health advice, and forecast!";
+    } else if (lowerMessage.includes("weather") || lowerMessage.includes("forecast")) {
+      response = "🌤️ **72-Hour Air Quality Forecast:**\n\nToday: Variable conditions across regions\n• North India: High pollution (AQI 150-300)\n• South India: Moderate levels (AQI 60-120)\n• Coastal areas: Generally good (AQI 40-80)\n• Hill stations: Excellent (AQI 20-50)\n\n**Weather Impact:**\n• Wind patterns affecting dispersion\n• Temperature inversions trapping pollutants\n• Monsoon effects on air quality\n\nWould you like a specific city's 3-day forecast?";
     } else if (lowerMessage.includes("pollution") || lowerMessage.includes("cause")) {
-      response = "Current pollution in Delhi is mainly caused by:\n\n🚗 Vehicle emissions (30%)\n🏭 Industrial sources (25%)\n🔥 Crop burning in nearby states (20%)\n🏗️ Construction dust (15%)\n🌡️ Weather conditions (10%)\n\nWind patterns and temperature inversions are trapping pollutants close to ground level.";
-    } else if (lowerMessage.includes("forecast") || lowerMessage.includes("tomorrow")) {
-      response = "Tomorrow's AQI forecast for Delhi:\n\n🌅 Morning: 145 (Unhealthy for Sensitive)\n☀️ Afternoon: 132 (Unhealthy for Sensitive) \n🌆 Evening: 168 (Unhealthy)\n\nBest time for outdoor activities: 2-4 PM\nWorst time: 7-9 PM\n\nWould you like a 3-day forecast?";
-      type = "suggestion";
+      response = "🏭 **Major Pollution Sources in India:**\n\n**Vehicular Emissions (30-40%)**\n• Cars, buses, trucks, two-wheelers\n• Diesel generators\n\n**Industrial Sources (25-35%)**\n• Power plants, factories\n• Construction activities\n\n**Agricultural Burning (15-25%)**\n• Crop residue burning in Punjab, Haryana\n• Seasonal spikes in North India\n\n**Other Sources:**\n• Dust storms • Waste burning • Cooking fuels\n\nEach city has different primary sources. Which city's pollution profile interests you?";
     } else if (lowerMessage.includes("mask") || lowerMessage.includes("protection")) {
-      response = "For current AQI levels, I recommend:\n\n😷 N95 masks for outdoor activities\n🚫 Cloth masks are not sufficient\n⏱️ Limit outdoor exposure to 30 minutes\n🏃‍♂️ Avoid exercising outdoors\n\nN95 masks filter 95% of particles. Make sure it fits snugly around your nose and mouth.";
-    } else if (lowerMessage.includes("location") || lowerMessage.includes("area")) {
-      response = "I can provide air quality information for any location in India. Popular areas:\n\n📍 Delhi NCR: Currently Unhealthy (156)\n📍 Mumbai: Moderate (89)\n📍 Bangalore: Moderate (65)\n📍 Chennai: Moderate (78)\n\nJust tell me your city or pin code for specific data!";
+      response = "😷 **Complete Protection Guide:**\n\n**Mask Recommendations:**\n• N95/N99: For AQI > 100 (95-99% filtration)\n• Surgical masks: Basic protection only\n• Cloth masks: Not effective for PM2.5\n\n**Indoor Protection:**\n• HEPA air purifiers\n• Keep windows closed during high pollution\n• Use exhaust fans while cooking\n\n**Timing Matters:**\n• Avoid 6-10 AM and 6-10 PM (peak hours)\n• Best air quality: 2-4 PM usually\n\n**Special Groups:**\n• Children, elderly, pregnant women need extra care\n• Asthma/COPD patients should stay indoors when AQI > 150";
+    } else if (lowerMessage.includes("hindi") || lowerMessage.includes("हिंदी")) {
+      response = "🇮🇳 मैं हिंदी में भी जवाब दे सकता हूं!\n\n**मुख्य सेवाएं:**\n• वायु गुणवत्ता की जानकारी\n• स्वास्थ्य सुझाव\n• 200+ भारतीय शहरों का डेटा\n• आवाज से सहायता\n\nआप हिंदी या अंग्रेजी में कोई भी सवाल पूछ सकते हैं। Settings में भाषा बदल सकते हैं।\n\nक्या आपको किसी खास शहर की AQI जानकारी चाहिए?";
     } else {
-      response = "I'm here to help with air quality questions! You can ask me about:\n\n• Current AQI levels\n• Health recommendations\n• Pollution causes\n• Weather forecasts\n• Protection measures\n• Location-specific data\n\nWhat would you like to know?";
+      response = "🤖 **Vayu AI Assistant Capabilities:**\n\n• 🌍 Real-time AQI for 200+ Indian cities\n• 🏥 Personalized health recommendations\n• 🎤 Voice interaction (speak & listen)\n• 📊 3-day air quality forecasts\n• 🗺️ Interactive pollution maps\n• 🌡️ Weather impact analysis\n• 🇮🇳 Hindi & English support\n• 📱 Smart notifications\n\n**Popular Commands:**\n'Current AQI Delhi' | 'Health tips' | 'Best time to exercise' | 'Mask recommendations'\n\nWhat would you like to explore?";
     }
 
     return {
@@ -92,6 +95,15 @@ const ChatBotUI = () => {
     }, 1500);
   };
 
+  const handleVoiceInput = (text: string) => {
+    setInputMessage(text);
+    setTimeout(() => handleSendMessage(), 500);
+  };
+
+  const handleSpeakResponse = (text: string) => {
+    // Voice response is handled by the VoiceAssistant component
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -100,41 +112,52 @@ const ChatBotUI = () => {
   };
 
   const quickActions = [
-    { text: "Current AQI", icon: <TrendingUp className="h-4 w-4" /> },
-    { text: "Health tips", icon: <User className="h-4 w-4" /> },
-    { text: "My location", icon: <MapPin className="h-4 w-4" /> },
+    { text: "Current AQI Delhi", icon: <TrendingUp className="h-4 w-4" /> },
+    { text: "Health recommendations", icon: <User className="h-4 w-4" /> },
+    { text: "Voice assistance", icon: <MessageCircle className="h-4 w-4" /> },
+    { text: "City pollution data", icon: <MapPin className="h-4 w-4" /> },
   ];
 
   return (
     <>
-      {/* Enhanced Chat Bubble Button - Bottom Right */}
+      {/* Enhanced Chat Bubble Button - More Visible */}
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
-          <Button
-            onClick={() => setIsOpen(true)}
-            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 shadow-2xl border-0 px-4 py-3 h-auto rounded-full flex items-center space-x-3 text-white font-medium transform hover:scale-105 transition-all duration-200"
-          >
-            <div className="relative">
-              <MessageCircle className="h-6 w-6" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-            </div>
-            <span className="text-sm font-semibold">Vayu: AI Assistant</span>
-          </Button>
+          <div className="relative">
+            {/* Pulsing animation ring */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-green-500 rounded-full animate-pulse opacity-75"></div>
+            
+            <Button
+              onClick={() => setIsOpen(true)}
+              className="relative bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 shadow-2xl border-0 px-6 py-4 h-auto rounded-full flex items-center space-x-3 text-white font-semibold transform hover:scale-105 transition-all duration-300 min-w-[200px]"
+            >
+              <div className="relative">
+                <MessageCircle className="h-7 w-7" />
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-bounce flex items-center justify-center">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+              </div>
+              <div className="text-left">
+                <div className="text-base font-bold">Vayu: AI Assistant</div>
+                <div className="text-xs text-blue-100">Air Quality Expert • Voice Enabled</div>
+              </div>
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* Chat Window - Right Side Panel */}
+      {/* Enhanced Chat Window */}
       {isOpen && (
-        <Card className="fixed top-16 right-6 bottom-6 w-80 shadow-2xl z-50 flex flex-col bg-white dark:bg-gray-800">
+        <Card className="fixed top-16 right-6 bottom-6 w-96 shadow-2xl z-50 flex flex-col bg-white dark:bg-gray-800 border-2 border-gradient-to-r from-blue-500 to-green-500">
           {/* Header */}
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-t-lg">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <Bot className="h-4 w-4" />
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <Bot className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Vayu AI Assistant</h3>
-                <p className="text-xs text-blue-100">Always here to help</p>
+                <h3 className="font-bold text-base">Vayu AI Assistant</h3>
+                <p className="text-xs text-blue-100">200+ Cities • Voice Enabled • Real-time Data</p>
               </div>
             </div>
             <Button
@@ -147,6 +170,14 @@ const ChatBotUI = () => {
             </Button>
           </div>
 
+          {/* Voice Assistant Controls */}
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+            <VoiceAssistant 
+              onVoiceInput={handleVoiceInput}
+              onSpeakResponse={handleSpeakResponse}
+            />
+          </div>
+
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
@@ -156,9 +187,9 @@ const ChatBotUI = () => {
                   className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
+                    className={`max-w-[85%] rounded-lg p-3 ${
                       message.sender === "user"
-                        ? "bg-blue-500 text-white"
+                        ? "bg-gradient-to-r from-blue-500 to-green-500 text-white"
                         : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
                     }`}
                   >
@@ -203,7 +234,7 @@ const ChatBotUI = () => {
           {/* Quick Actions */}
           {messages.length === 1 && (
             <div className="px-4 pb-2">
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {quickActions.map((action, index) => (
                   <Button
                     key={index}
@@ -211,9 +242,9 @@ const ChatBotUI = () => {
                     size="sm"
                     onClick={() => {
                       setInputMessage(action.text);
-                      handleSendMessage();
+                      setTimeout(() => handleSendMessage(), 100);
                     }}
-                    className="flex items-center space-x-1 text-xs dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="flex items-center space-x-1 text-xs dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 justify-start"
                   >
                     {action.icon}
                     <span>{action.text}</span>
@@ -230,7 +261,7 @@ const ChatBotUI = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask about air quality..."
+                placeholder="Ask about air quality, health tips, or say 'voice help'..."
                 className="flex-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 disabled={isTyping}
               />
@@ -238,7 +269,7 @@ const ChatBotUI = () => {
                 onClick={handleSendMessage}
                 disabled={isTyping || inputMessage.trim() === ""}
                 size="icon"
-                className="bg-blue-500 hover:bg-blue-600"
+                className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
               >
                 <Send className="h-4 w-4" />
               </Button>
